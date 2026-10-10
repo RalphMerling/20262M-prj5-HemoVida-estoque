@@ -140,3 +140,4 @@ Num projeto real esses dados não podem ser expostos em rotas abertas. Uma lista
 | [`docs/fase-7-8-addresses-contacts.md`](./docs/fase-7-8-addresses-contacts.md) | Endereços e contatos |
 | [`docs/fase-9-robustez.md`](./docs/fase-9-robustez.md) | Erros, helmet e rate limit |
 | [`docs/fase-10-swagger.md`](./docs/fase-10-swagger.md) | Documentação e verificação manual |
+"# Node-com-Nest.js-Prisma-Swagger" 
