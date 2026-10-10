@@ -26,7 +26,6 @@ export class PrismaExceptionFilter implements ExceptionFilter {
 
   catch(erro: Prisma.PrismaClientKnownRequestError, host: ArgumentsHost): void {
     const resposta = host.switchToHttp().getResponse<Response>();
-
     const { status, mensagem } = this.traduzir(erro);
 
     // A stack completa vai para o log do servidor, nao para o cliente.

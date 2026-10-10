@@ -18,13 +18,8 @@ export function garantirDonoOuAdmin(
   usuario: UsuarioAutenticado,
   idDoDono: number,
 ): void {
-  if (usuario.role === ROLE_ADMIN) {
-    return;
-  }
-
-  if (usuario.sub === idDoDono) {
-    return;
-  }
+  if (usuario.role === ROLE_ADMIN) return;
+  if (usuario.sub === idDoDono) return;
 
   throw new ForbiddenException(
     'Voce so pode acessar os seus proprios registros',

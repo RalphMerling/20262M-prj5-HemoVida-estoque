@@ -23,9 +23,13 @@ export class AuthController {
    * uma rota de login.
    */
   @Public()
+  // @UseGuards(ThrottlerGuard)
+  @HttpCode(HttpStatus.OK)
+  // @Throttle({ login: { limit: 5, ttl: 60_000 } })
+  // @HttpCode(HttpStatus.OK)
+  @Post('login')
   @UseGuards(ThrottlerGuard)
   @Throttle({ login: { limit: 5, ttl: 60_000 } })
-  @HttpCode(HttpStatus.OK)
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto);

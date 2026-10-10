@@ -28,16 +28,9 @@ export class RolesGuard implements CanActivate {
       [contexto.getHandler(), contexto.getClass()],
     );
 
-    if (!rolesExigidas || rolesExigidas.length === 0) {
-      return true;
-    }
+    if (!rolesExigidas?.length) return true;
 
-    const requisicao = contexto
-      .switchToHttp()
-      .getRequest<Request & { user?: UsuarioAutenticado }>();
-
-    const usuario = requisicao.user;
-
+    const usuario = contexto.switchToHttp().getRequest().user;
     if (!usuario || !rolesExigidas.includes(usuario.role)) {
       throw new ForbiddenException(
         `Esta operacao exige um dos perfis: ${rolesExigidas.join(', ')}`,

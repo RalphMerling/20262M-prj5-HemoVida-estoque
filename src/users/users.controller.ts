@@ -30,20 +30,20 @@ export class UsersController {
   constructor(private readonly users: UsersService) {}
 
   /** Aberta. A senha nao aparece: a omissao e global no PrismaService. */
-  @Public()
+  // @Public()
   @Get()
   listar() {
     return this.users.listar();
   }
 
-  @Public()
+  // @Public()
   @Get(':id')
   buscar(@Param('id', ParseIntPipe) id: number) {
     return this.users.buscarPorId(id);
   }
 
   /** Aberta: e o cadastro. O perfil sai sempre como "user". */
-  @Public()
+  // @Public()
   @Post()
   criar(@Body() dto: CreateUserDto) {
     return this.users.criar(dto);
