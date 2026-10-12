@@ -1,0 +1,18 @@
+MS2-Estoque/
+├── prisma/
+│   └── schema.prisma
+├── src/
+│   ├── auth/
+│   ├── estoque/
+│   │   ├── dto/
+│   │   ├── estoque.controller.ts
+│   │   └── estoque.service.ts
+│   ├── transacoes/
+│   │   ├── dto/
+│   │   ├── transacoes.controller.ts
+│   │   └── transacoes.service.ts
+│   ├── health/
+│   ├── prisma/
+│   ├── app.module.ts
+│   └── main.ts
+└── package.json

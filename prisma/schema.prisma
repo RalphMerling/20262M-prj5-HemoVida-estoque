@@ -1,3 +1,4 @@
+
 generator client {
   provider     = "prisma-client"
   output       = "../src/generated/prisma"
@@ -9,53 +10,43 @@ datasource db {
   provider = "mysql"
 }
 
-model User {
-  id             Int       @id @default(autoincrement())
-  nome           String    @db.VarChar(120)
-  email          String    @unique(map: "email") @db.VarChar(150)
-  senha          String    @db.VarChar(120)
-  dataNascimento DateTime? @db.Date
-  rg             String?   @db.VarChar(20)
-  cpf            String?   @unique(map: "cpf") @db.VarChar(20)
-  createdAt      DateTime  @default(now()) @db.DateTime(0)
-  updatedAt      DateTime  @updatedAt @db.DateTime(0)
-  nomeMae        String?   @default("Não informado") @map("NomeMae") @db.VarChar(255)
-  role           String?   @default("user") @db.VarChar(50)
-  
-  contatos       Contact[]
-  enderecos      Address[]
+model Estoque {
+  estoque_id           Int       @id @default(autoincrement())
+  estoque_data_entrada DateTime  @db.DateTime(0)
+  estoque_data_saida   DateTime? @db.DateTime(0)
+  estoque_status       Int       @db.TinyInt
+  bolsa_id             Int
 
-  @@map("usuarios")
+  itens TransacaoItem[]
+
+  @@map("estoque")
 }
 
-model Address {
-  id          Int      @id @default(autoincrement())
-  idUsuario   Int
-  cep         String   @db.VarChar(20)
-  rua         String   @db.VarChar(150)
-  numero      String   @db.VarChar(20)
-  complemento String?  @db.VarChar(100)
-  bairro      String   @db.VarChar(100)
-  cidade      String   @db.VarChar(100)
-  estado      String   @db.VarChar(2)
-  createdAt   DateTime @default(now()) @db.DateTime(0)
-  updatedAt   DateTime @updatedAt @db.DateTime(0)
-  
-  usuario     User     @relation(fields: [idUsuario], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "enderecos_ibfk_1")
+model Transacao {
+  transacao_id   Int     @id
+  transacao_tipo String? @db.VarChar(45)
+  solicitacao_id Int?
 
-  @@index([idUsuario], map: "idUsuario")
-  @@map("enderecos")
+  itens TransacaoItem[]
+
+  @@map("transacao")
 }
 
-model Contact {
-  id             Int      @id @default(autoincrement())
-  idUsuario      Int
-  numeroTelefone String   @db.VarChar(30)
-  createdAt      DateTime @default(now()) @db.DateTime(0)
-  updatedAt      DateTime @updatedAt @db.DateTime(0)
-  
-  usuario        User     @relation(fields: [idUsuario], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "contatos_ibfk_1")
+model TransacaoItem {
+  estoque_saida_id         Int      @id @default(autoincrement())
+  estoque_saida_destino    String   @db.VarChar(45)
+  estoque_saida_data_saida DateTime @db.Date
+  estoque_saida_status     Int?     @db.TinyInt
+  transacao_id             Int
+  bolsa_id                 Int
+  estoque_id               Int
 
-  @@index([idUsuario], map: "idUsuario")
-  @@map("contatos")
+  transacao Transacao @relation(fields: [transacao_id], references: [transacao_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_item_transacao_transacao1")
+
+  estoque Estoque @relation(fields: [estoque_id], references: [estoque_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_transacao_item_estoque1")
+
+  @@index([transacao_id], map: "fk_item_transacao_transacao1_idx")
+  @@index([estoque_id], map: "fk_transacao_item_estoque1_idx")
+
+  @@map("transacao_item")
 }

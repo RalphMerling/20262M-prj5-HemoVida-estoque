@@ -1,14 +1,15 @@
+
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
-import { AuthModule } from './auth/auth.module';
 import { validateEnv } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
-import { UsersModule } from './users/users.module';
-
+import { EstoqueModule } from './estoque/estoque.module';
+import { AuthModule } from './auth/auth.module';
+import { TransacoesModule } from './transacoes/transacoes.module';
 
 @Module({
   imports: [
@@ -17,11 +18,14 @@ import { UsersModule } from './users/users.module';
       cache: true,
       validate: validateEnv,
     }),
+
     PrismaModule,
     HealthModule,
     AuthModule,
-    UsersModule,
+    EstoqueModule,
+    TransacoesModule,
   ],
+
   providers: [
     {
       provide: APP_FILTER,
