@@ -48,7 +48,6 @@ export class TransacoesService {
 
   // 8. Criar uma nova transação
   async criarTransacao(dto: CriarTransacaoDto) {
-    // Impedir a criação de uma transação já cancelada
     if (
       dto.transacao_tipo?.trim().toUpperCase() ===
       'CANCELADA'
@@ -64,6 +63,7 @@ export class TransacoesService {
           transacao_id: dto.transacao_id,
           transacao_tipo: dto.transacao_tipo ?? null,
           solicitacao_id: dto.solicitacao_id ?? null,
+          transacao_status: 1,
         },
       });
     } catch (erro) {
@@ -83,8 +83,6 @@ export class TransacoesService {
   // 9. Cancelar uma transação
   async cancelarTransacao(id: number) {
     return this.prisma.$transaction(async (tx) => {
-      // ETAPA 16.4.2
-      // Bloquear a linha da transação durante o cancelamento
       await tx.$queryRaw`
         SELECT transacao_id
         FROM transacao
@@ -92,7 +90,6 @@ export class TransacoesService {
         FOR UPDATE
       `;
 
-      // Consultar a transação após obter o bloqueio
       const transacao = await tx.transacao.findUnique({
         where: {
           transacao_id: id,
@@ -108,21 +105,18 @@ export class TransacoesService {
         );
       }
 
-      // Verificar se já está cancelada
       if (transacao.transacao_tipo === 'CANCELADA') {
         throw new BadRequestException(
           `A transação ${id} já está cancelada`,
         );
       }
 
-      // Impedir cancelamento com itens associados
       if (transacao.itens.length > 0) {
         throw new ConflictException(
           'Não é possível cancelar uma transação que possui itens associados',
         );
       }
 
-      // Atualizar somente se continuar sem itens
       const atualizacao = await tx.transacao.updateMany({
         where: {
           transacao_id: id,
@@ -133,6 +127,7 @@ export class TransacoesService {
         },
         data: {
           transacao_tipo: 'CANCELADA',
+          transacao_status: 0,
         },
       });
 
@@ -142,7 +137,6 @@ export class TransacoesService {
         );
       }
 
-      // Retornar a transação cancelada
       return tx.transacao.findUniqueOrThrow({
         where: {
           transacao_id: id,
@@ -156,20 +150,16 @@ export class TransacoesService {
     transacaoId: number,
     dto: AdicionarItemTransacaoDto,
   ) {
-    // Verificar se a transação existe
     const transacao = await this.buscarTransacaoPorId(
       transacaoId,
     );
 
-    // Impedir inclusão em transação cancelada
     if (transacao.transacao_tipo === 'CANCELADA') {
       throw new ConflictException(
         'Não é possível adicionar itens a uma transação cancelada',
       );
     }
 
-    // Reutilizar a operação de saída do estoque
-    // O EstoqueService aplica o bloqueio FOR UPDATE
     return this.estoqueService.registrarSaidaEstoque({
       estoque_id: dto.estoque_id,
       transacao_id: transacaoId,
@@ -183,7 +173,6 @@ export class TransacoesService {
     itemId: number,
   ) {
     return this.prisma.$transaction(async (tx) => {
-      // Verificar se a transação existe
       const transacao = await tx.transacao.findUnique({
         where: {
           transacao_id: transacaoId,
@@ -196,17 +185,15 @@ export class TransacoesService {
         );
       }
 
-      // Impedir remoção em transação cancelada
       if (transacao.transacao_tipo === 'CANCELADA') {
         throw new ConflictException(
           'Não é possível remover itens de uma transação cancelada',
         );
       }
 
-      // Localizar o item dentro da transação
       const item = await tx.transacaoItem.findFirst({
         where: {
-          estoque_saida_id: itemId,
+          transacao_item_id: itemId,
           transacao_id: transacaoId,
         },
       });
@@ -217,22 +204,20 @@ export class TransacoesService {
         );
       }
 
-      // Verificar se o item já foi removido
-      if (item.estoque_saida_status === 0) {
+      if (item.transacao_item_status === 0) {
         throw new ConflictException(
           `O item ${itemId} já foi removido`,
         );
       }
 
-      // Realizar a exclusão lógica
       const atualizacao = await tx.transacaoItem.updateMany({
         where: {
-          estoque_saida_id: itemId,
+          transacao_item_id: itemId,
           transacao_id: transacaoId,
-          estoque_saida_status: item.estoque_saida_status,
+          transacao_item_status: item.transacao_item_status,
         },
         data: {
-          estoque_saida_status: 0,
+          transacao_item_status: 0,
         },
       });
 
@@ -246,7 +231,7 @@ export class TransacoesService {
         mensagem: 'Item removido logicamente com sucesso',
         item: await tx.transacaoItem.findUniqueOrThrow({
           where: {
-            estoque_saida_id: itemId,
+            transacao_item_id: itemId,
           },
         }),
       };
@@ -255,7 +240,6 @@ export class TransacoesService {
 
   // 12. Consultar os itens de uma transação
   async consultarItensTransacao(transacaoId: number) {
-    // Verificar se a transação existe
     const transacao = await this.prisma.transacao.findUnique({
       where: {
         transacao_id: transacaoId,
@@ -268,13 +252,12 @@ export class TransacoesService {
       );
     }
 
-    // Consultar todos os itens, inclusive os removidos
     return this.prisma.transacaoItem.findMany({
       where: {
         transacao_id: transacaoId,
       },
       orderBy: {
-        estoque_saida_id: 'asc',
+        transacao_item_id: 'asc',
       },
     });
   }

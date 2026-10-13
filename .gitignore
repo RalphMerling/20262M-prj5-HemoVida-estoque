@@ -1,27 +1,3 @@
-# dependências
-# /node_modules
-
-# # build
-# /dist
-# *.tsbuildinfo
-
-# # segredos — NUNCA versionar
-# .env
-# .env.local
-# .env.*.local
-
-# # Prisma Client gerado (Prisma 7 gera fora do node_modules)
-# /src/generated
-
-# # logs
-# *.log
-# npm-debug.log*
-
-# # sistema operacional / editor
-# .DS_Store
-# Thumbs.db
-# .idea
-
 
 /node_modules
 /dist
@@ -37,3 +13,5 @@
 *.log
 .DS_Store
 Thumbs.db
+
+gerar-token-teste.cjs

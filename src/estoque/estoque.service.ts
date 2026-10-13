@@ -48,7 +48,6 @@ export class EstoqueService {
   async registrarEntradaEstoque(
     dto: RegistrarEntradaEstoqueDto,
   ) {
-    // Verificar se a bolsa já foi cadastrada
     const bolsaExistente = await this.prisma.estoque.findFirst({
       where: {
         bolsa_id: dto.bolsa_id,
@@ -61,7 +60,6 @@ export class EstoqueService {
       );
     }
 
-    // Registrar a entrada de uma nova bolsa
     return this.prisma.estoque.create({
       data: {
         bolsa_id: dto.bolsa_id,
@@ -76,7 +74,6 @@ export class EstoqueService {
   async registrarSaidaEstoque(
     dto: RegistrarSaidaEstoqueDto,
   ) {
-    // Verificar se o destino foi informado
     if (!dto.destino.trim()) {
       throw new BadRequestException(
         'O destino não pode estar vazio',
@@ -86,10 +83,7 @@ export class EstoqueService {
     const agora = new Date();
 
     return this.prisma.$transaction(async (tx) => {
-
-      // ETAPA 16.4.1
-      // Bloquear a linha da transação no MySQL.
-      // O bloqueio permanece até o fim da operação.
+      // Bloquear a transação durante a operação
       await tx.$queryRaw`
         SELECT transacao_id
         FROM transacao
@@ -97,7 +91,6 @@ export class EstoqueService {
         FOR UPDATE
       `;
 
-      // Consultar a transação após obter o bloqueio
       const transacao = await tx.transacao.findUnique({
         where: {
           transacao_id: dto.transacao_id,
@@ -110,14 +103,12 @@ export class EstoqueService {
         );
       }
 
-      // Impedir saída em uma transação cancelada
       if (transacao.transacao_tipo === 'CANCELADA') {
         throw new ConflictException(
           'Não é possível registrar saída em uma transação cancelada',
         );
       }
 
-      // Atualizar somente se a bolsa estiver disponível
       const atualizacao = await tx.estoque.updateMany({
         where: {
           estoque_id: dto.estoque_id,
@@ -130,7 +121,6 @@ export class EstoqueService {
         },
       });
 
-      // Verificar se a atualização foi realizada
       if (atualizacao.count !== 1) {
         const estoque = await tx.estoque.findUnique({
           where: {
@@ -149,7 +139,6 @@ export class EstoqueService {
         );
       }
 
-      // Buscar os dados atualizados do estoque
       const estoqueAtualizado =
         await tx.estoque.findUniqueOrThrow({
           where: {
@@ -157,12 +146,11 @@ export class EstoqueService {
           },
         });
 
-      // Registrar a movimentação na tabela transacao_item
       const item = await tx.transacaoItem.create({
         data: {
-          estoque_saida_destino: dto.destino.trim(),
-          estoque_saida_data_saida: agora,
-          estoque_saida_status: 1,
+          transacao_item_destino: dto.destino.trim(),
+          transacao_item_data_saida: agora,
+          transacao_item_status: 1,
           bolsa_id: estoqueAtualizado.bolsa_id,
 
           transacao: {
@@ -179,7 +167,6 @@ export class EstoqueService {
         },
       });
 
-      // Retornar o resultado da operação
       return {
         mensagem: 'Saída registrada com sucesso',
         estoque: estoqueAtualizado,
@@ -193,7 +180,6 @@ export class EstoqueService {
     id: number,
     dto: AtualizarStatusEstoqueDto,
   ) {
-    // Atualização condicional para evitar inconsistências
     const atualizacao = await this.prisma.estoque.updateMany({
       where: {
         estoque_id: id,
@@ -224,7 +210,6 @@ export class EstoqueService {
       );
     }
 
-    // Retornar o registro atualizado
     return this.prisma.estoque.findUniqueOrThrow({
       where: {
         estoque_id: id,
@@ -232,9 +217,54 @@ export class EstoqueService {
     });
   }
 
+  // 6. Excluir uma bolsa sem movimentações registradas
+  async excluirBolsaEstoque(id: number) {
+    return this.prisma.$transaction(async (tx) => {
+      // Bloquear a bolsa durante a verificação e exclusão
+      const registros = await tx.$queryRaw<
+        Array<{ estoque_id: number }>
+      >`
+        SELECT estoque_id
+        FROM estoque
+        WHERE estoque_id = ${id}
+        FOR UPDATE
+      `;
+
+      if (registros.length === 0) {
+        throw new NotFoundException(
+          `Registro de estoque ${id} não encontrado`,
+        );
+      }
+
+      // Impedir a exclusão de bolsas com movimentações
+      const quantidadeMovimentacoes =
+        await tx.transacaoItem.count({
+          where: {
+            estoque_id: id,
+          },
+        });
+
+      if (quantidadeMovimentacoes > 0) {
+        throw new ConflictException(
+          'Não é possível excluir uma bolsa que possui movimentações registradas',
+        );
+      }
+
+      const estoqueExcluido = await tx.estoque.delete({
+        where: {
+          estoque_id: id,
+        },
+      });
+
+      return {
+        mensagem: 'Bolsa excluída do estoque com sucesso',
+        estoque: estoqueExcluido,
+      };
+    });
+  }
+
   // 13. Consultar o histórico de um registro do estoque
   async consultarHistoricoEstoque(id: number) {
-    // Verificar se o registro existe
     const estoque = await this.prisma.estoque.findUnique({
       where: {
         estoque_id: id,
@@ -247,7 +277,6 @@ export class EstoqueService {
       );
     }
 
-    // Consultar as movimentações relacionadas
     const movimentacoes =
       await this.prisma.transacaoItem.findMany({
         where: {
@@ -257,11 +286,10 @@ export class EstoqueService {
           transacao: true,
         },
         orderBy: {
-          estoque_saida_id: 'asc',
+          transacao_item_id: 'asc',
         },
       });
 
-    // Retornar o estoque e seu histórico
     return {
       estoque,
       movimentacoes,

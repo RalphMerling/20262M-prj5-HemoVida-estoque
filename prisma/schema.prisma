@@ -23,9 +23,10 @@ model Estoque {
 }
 
 model Transacao {
-  transacao_id   Int     @id
-  transacao_tipo String? @db.VarChar(45)
-  solicitacao_id Int?
+  transacao_id     Int     @id
+  transacao_tipo   String? @db.VarChar(45)
+  solicitacao_id   Int?
+  transacao_status Int
 
   itens TransacaoItem[]
 
@@ -33,13 +34,13 @@ model Transacao {
 }
 
 model TransacaoItem {
-  estoque_saida_id         Int      @id @default(autoincrement())
-  estoque_saida_destino    String   @db.VarChar(45)
-  estoque_saida_data_saida DateTime @db.Date
-  estoque_saida_status     Int?     @db.TinyInt
-  transacao_id             Int
-  bolsa_id                 Int
-  estoque_id               Int
+  transacao_item_id         Int      @id @default(autoincrement())
+  transacao_item_destino    String   @db.VarChar(45)
+  transacao_item_data_saida DateTime @db.Date
+  transacao_item_status     Int?     @db.TinyInt
+  transacao_id              Int
+  bolsa_id                  Int
+  estoque_id                Int
 
   transacao Transacao @relation(fields: [transacao_id], references: [transacao_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_item_transacao_transacao1")
 

@@ -2,6 +2,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -24,14 +25,12 @@ export class EstoqueController {
   ) {}
 
   // 1. Consultar todos os registros do estoque
-  // Exige JWT válido
   @Get()
   consultarEstoque() {
     return this.estoqueService.consultarEstoque();
   }
 
   // 2. Buscar um registro do estoque pelo ID
-  // Exige JWT válido
   @Get(':id')
   buscarEstoquePorId(
     @Param('id', ParseIntPipe) id: number,
@@ -70,8 +69,17 @@ export class EstoqueController {
     );
   }
 
+  // 6. Excluir uma bolsa sem movimentações
+  // Operação permitida somente para administradores
+  @Roles('admin')
+  @Delete(':id')
+  excluirBolsaEstoque(
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.estoqueService.excluirBolsaEstoque(id);
+  }
+
   // 13. Consultar o histórico de um registro do estoque
-  // Exige JWT válido
   @Get(':id/historico')
   consultarHistoricoEstoque(
     @Param('id', ParseIntPipe) id: number,
