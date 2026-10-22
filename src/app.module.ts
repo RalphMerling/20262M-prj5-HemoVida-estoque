@@ -33,4 +33,11 @@ import { TransacoesModule } from './transacoes/transacoes.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule {/** adicionar somente estas linhas do construtor  **/
+  constructor() {
+    console.log("Aplicação iniciada!");
+    console.log("Banco:", process.env.DATABASE_URL);
+    console.log("API Key:", process.env.API_KEY);
+    console.log("JWT Secret:", process.env.JWT_SECRET);   
+  }
+  /** fim do adicionar  **/}
