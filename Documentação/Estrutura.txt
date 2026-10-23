@@ -16,7 +16,3 @@ MS2-Estoque/
 │   ├── app.module.ts
 │   └── main.ts
 └── package.json
-
-
-
-teste de commit

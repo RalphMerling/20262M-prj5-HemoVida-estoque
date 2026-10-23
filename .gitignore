@@ -6,6 +6,7 @@
 # segredos — NUNCA versionar
 .env
 .env.local
+.env.*
 
 # Prisma Client gerado
 /src/generated
