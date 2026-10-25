@@ -22,6 +22,10 @@ RUN apt-get update && \
     docker-ce-cli && \
     rm -rf /var/lib/apt/lists/*
 
+# Adiciona o usuario jenkins ao grupo root (GID 0)
+# Necessario para acessar o socket Docker neste ambiente local
+RUN usermod -aG root jenkins
+
 # Prepara o diretório de trabalho do agente Jenkins
 RUN mkdir -p /home/jenkins/agent && \
     chown -R jenkins:jenkins /home/jenkins/agent
