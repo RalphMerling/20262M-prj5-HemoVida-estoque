@@ -10,7 +10,7 @@ pipeline {
 
         stage('Fetch Secrets') {
             steps {
-                sh 'npx -y @infisical/cli export --env="dev" --path="/quarto" --token="st.0f20435c-cc8b-4f06-8409-66d5cf392ad3.161752b8e21c58feeeba8cb68067cd37.a9504cd622815cea2d12e004cbf37e42" > .env'
+                sh 'npx -y @infisical/cli export --env="dev" --path="/hemovida/estoque" --token="st.0ffee575-a9ce-42aa-98be-e1b771c34e1c.4f5c640a4524bd30c8a98522decb4019.4f3697b54407b5addb96d086f54d10a5" > .env'
             }
         }
 
@@ -20,28 +20,52 @@ pipeline {
             }
         }
 
+         stage('Prisma Generate') {
+
+            steps {
+
+                sh 'npx prisma generate'
+            }
+        }
+
         stage('Construir Imagem Docker') {
             steps {
                 script {
                     def appName = 'hemovida-estoque'
                     def imageTag = "${appName}:${env.BUILD_ID}"
 
-                    sh "docker build -t ${imageTag} ."
+                    sh "docker compose build -t ${imageTag} ."
                 }
             }
         }
     
 
-        stage('Fazer Deploy') {
-            steps {
-                script {
-                    def appName = 'hemovida-estoque'
-                    def imageTag = "${appName}:${env.BUILD_ID}"
+        // stage('Fazer Deploy') {
+        //     steps {
+        //         script {
+        //             def appName = 'hemovida-estoque'
+        //             def imageTag = "${appName}:${env.BUILD_ID}"
 
-                    sh "docker stop ${appName} || exit 0"
-                    sh "docker rm -v ${appName} || exit 0"
-                    sh "docker run -d --name ${appName} -p 7503:7503 --env-file .env ${imageTag}"
-                }
+        //             sh "docker stop ${appName} || exit 0"
+        //             sh "docker rm -v ${appName} || exit 0"
+        //             sh "docker run -d --name ${appName} -p 7503:7503 --env-file .env ${imageTag}"
+        //         }
+        //     }
+        // }
+        stage('Docker Up') {
+
+            steps {
+
+                sh 'docker compose up -d'
+            }
+        }
+
+        stage('Docker PS') {
+
+            steps {
+
+                sh 'node -v'
+                sh 'npm -v'
             }
         }
     }
