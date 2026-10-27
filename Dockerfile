@@ -1,6 +1,10 @@
 
 # Imagem base com Node.js 24
-FROM node:24-bookworm-slim
+FROM node:24-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
 
 # Diretório de trabalho da aplicação
 WORKDIR /app
