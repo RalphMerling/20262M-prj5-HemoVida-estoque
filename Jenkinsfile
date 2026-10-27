@@ -34,7 +34,7 @@ pipeline {
                     def appName = 'hemovida-estoque'
                     def imageTag = "${appName}:${env.BUILD_ID}"
 
-                    sh "docker compose build -t ${imageTag} ."
+                    sh "docker compose build"
                 }
             }
         }
@@ -52,6 +52,7 @@ pipeline {
         //         }
         //     }
         // }
+
         stage('Docker Up') {
 
             steps {
