@@ -10,8 +10,14 @@ pipeline {
 
         stage('Instalar Dependências') {
             steps {
+                sh 'npm ci'
+            }
+        }
+
+        stage('Construir Imagem Docker') {
+            steps {
                 script {
-                    def appName = 'schoolmanager-gateway'
+                    def appName = 'hemovida-estoque'
                     def imageTag = "${appName}:${env.BUILD_ID}"
 
                     sh "docker build -t ${imageTag} ."
