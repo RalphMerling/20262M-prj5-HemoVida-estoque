@@ -1,20 +1,19 @@
 
 pipeline {
-    agent {
-        label 'hemovida'
-    }
-
-    options {
-        timestamps()
-        disableConcurrentBuilds()
-    }
-
+    agent any
     stages {
-        stage('Checkout') {
+        stage('Verificar Repositório') {
             steps {
-                checkout scm
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], useRemoteConfigs: [[url: 'https://github.com/RalphMerling/20262M-prj5-HemoVida-estoque.git']]])
             }
         }
+
+        stage('Instalar Dependências') {
+            steps {
+                sh 'npm ci'
+            }
+        }
+    
 
         stage('Docker Build') {
             steps {
