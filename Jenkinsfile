@@ -4,13 +4,18 @@ pipeline {
     stages {
         stage('Verificar Repositório') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], useRemoteConfigs: [[url: 'https://github.com/RalphMerling/20262M-prj5-HemoVida-estoque.git']]])
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], useRemoteConfigs: [[url: 'https://github.com/RalphMerling/20262M-prj5-HemoVida-estoque']]])
             }
         }
 
         stage('Instalar Dependências') {
             steps {
-                sh 'npm ci'
+                script {
+                    def appName = 'schoolmanager-gateway'
+                    def imageTag = "${appName}:${env.BUILD_ID}"
+
+                    sh "docker build -t ${imageTag} ."
+                }
             }
         }
     
