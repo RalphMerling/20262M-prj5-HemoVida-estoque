@@ -29,12 +29,12 @@ pipeline {
         stage('Fazer Deploy') {
             steps {
                 script {
-                    def appName = 'schoolmanager-gateway'
+                    def appName = 'hemovida-estoque'
                     def imageTag = "${appName}:${env.BUILD_ID}"
 
                     sh "docker stop ${appName} || exit 0"
                     sh "docker rm -v ${appName} || exit 0"
-                    sh "docker run -d --name ${appName} -p 9517:9517 --env-file .env ${imageTag}"
+                    sh "docker run -d --name ${appName} -p 7503:7503 --env-file .env ${imageTag}"
                 }
             }
         }
