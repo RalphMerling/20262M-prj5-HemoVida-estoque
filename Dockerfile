@@ -1,38 +1,17 @@
-
-# Imagem base com Node.js 24
-FROM node:24-alpine AS build
+FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 
-# Diretório de trabalho da aplicação
+FROM node:20-alpine
 WORKDIR /app
 
-# Instalar dependências necessárias para o Prisma
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    openssl ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache bash curl openssl libc6-compat && \
+    curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.alpine.sh' | bash && \
+    apk add infisical
 
-# Copiar arquivos de dependências
-COPY package*.json ./
+COPY --from=build /app /app
 
-# Instalar dependências do projeto
-RUN npm ci
-
-# Copiar os arquivos do projeto
-COPY . .
-
-# Gerar Prisma Client sem credenciais reais
-RUN DATABASE_URL="mysql://placeholder:placeholder@localhost:3306/placeholder" \
-    npx prisma generate
-
-# Compilar o NestJS
-RUN npm run build
-
-# Porta utilizada pela API
-EXPOSE 7503
-
-# Iniciar a aplicação compilada
-CMD ["node", "dist/main.js"]
+EXPOSE 9517
+CMD ["sh", "-c", "export INFISICAL_TOKEN=$(infisical login --domain https://app.infisical.com --method universal-auth --client-id $INFISICAL_UNIVERSAL_AUTH_CLIENT_ID --client-secret $INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET --silent --plain) && infisical run --domain https://app.infisical.com --projectId $INFISICAL_PROJECT_ID --env prod --path /api-gateway -- node src/server.js"]
