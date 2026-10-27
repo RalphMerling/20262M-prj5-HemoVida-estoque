@@ -26,15 +26,16 @@ pipeline {
         }
     
 
-        stage('Docker Build') {
+        stage('Fazer Deploy') {
             steps {
-                sh 'docker build -t hemovida-estoque:1.0 .'
-            }
-        }
+                script {
+                    def appName = 'schoolmanager-gateway'
+                    def imageTag = "${appName}:${env.BUILD_ID}"
 
-        stage('Verificar Imagem') {
-            steps {
-                sh 'docker image inspect hemovida-estoque:1.0 --format "{{.Id}}"'
+                    sh "docker stop ${appName} || exit 0"
+                    sh "docker rm -v ${appName} || exit 0"
+                    sh "docker run -d --name ${appName} -p 9517:9517 --env-file .env ${imageTag}"
+                }
             }
         }
     }
