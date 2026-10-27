@@ -1,5 +1,5 @@
 services:
-  hotel-quarto:
+  hemovida-estoque:
     build: .
 
     container_name: hemovida-estoque
