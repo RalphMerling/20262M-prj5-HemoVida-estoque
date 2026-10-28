@@ -1,44 +1,84 @@
 pipeline {
     agent any
+
     stages {
+
         stage('Verificar Repositório') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], useRemoteConfigs: [[url: 'https://github.com/RalphMerling/20262M-prj5-HemoVida-estoque']]])
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/RalphMerling/20262M-prj5-HemoVida-estoque'
+                    ]]
+                ])
             }
         }
 
         stage('Fetch Secrets') {
-            steps withCredentials([string(credentialsId: 'infisical-token-prod', variable: 'INFISICAL_TOKEN')]) {
-                    sh 'npx -y @infisical/cli export --env="prod" --path="/hemovida" --token="$INFISICAL_TOKEN" > .env'
+            steps {
+                withCredentials([
+                    string(
+                        credentialsId: 'infisical-token-prod',
+                        variable: 'INFISICAL_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set +x
+                        npx -y @infisical/cli export \
+                            --env="prod" \
+                            --path="/hemovida" \
+                            --token="$INFISICAL_TOKEN" > .env
+                    '''
                 }
-                sh "sed -i -E \"s/^([^=]+)=['\\\"](.*)['\\\"]\$/\\\\1=\\\\2/\" .env"
-                }
+            }
         }
 
         stage('Instalar Dependências') {
             steps {
-                sh 'npm install'
+                sh 'npm ci'
             }
         }
 
-         stage('Prisma Generate') {
-
+        stage('Prisma Generate') {
             steps {
-
                 sh 'npx prisma generate'
             }
         }
 
         stage('Construir Imagem Docker') {
             steps {
-                script {
-                    def appName = 'hemovida-estoque'
-                    def imageTag = "${appName}:${env.BUILD_ID}"
-
-                    sh 'docker compose build'
-                }
+                sh 'docker compose build'
             }
         }
+
+        stage('Docker Up') {
+            steps {
+                sh 'docker compose up -d'
+            }
+        }
+
+        stage('Docker PS') {
+            steps {
+                sh 'docker compose ps'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline HemoVida executado com sucesso!'
+        }
+
+        failure {
+            echo 'Falha na execução do pipeline HemoVida.'
+        }
+
+        always {
+            sh 'rm -f .env'
+        }
+    }
+}
     
 
         // stage('Fazer Deploy') {
