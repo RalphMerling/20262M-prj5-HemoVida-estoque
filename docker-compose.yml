@@ -1,22 +1,27 @@
 services:
   hemovida-estoque:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: hemovida-estoque:latest
 
     container_name: hemovida-estoque
 
     ports:
       - "7503:7503"
 
-    restart: always
+    restart: unless-stopped
+
+    env_file:
+      - .env
 
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
-      PORT: ${PORT}
-      RABBITMQ_URL: ${RABBITMQ_URL}
+      NODE_ENV: production
+      PORT: "7503"
 
     command: >
       sh -c "
       npx prisma db push &&
-      npm run dev
+      exec npm run dev
       "
