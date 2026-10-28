@@ -110,7 +110,6 @@ pipeline {
                 sh 'npm -v'
             }
         }
-    }
 
     post {
         success {
@@ -121,4 +120,3 @@ pipeline {
             echo 'Falha na execução do pipeline HemoVida.'
         }
     }
-}
