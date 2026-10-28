@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
     stages {
@@ -11,6 +10,8 @@ pipeline {
         stage('Fetch Secrets') {
             steps withCredentials([string(credentialsId: 'infisical-token-prod', variable: 'INFISICAL_TOKEN')]) {
                     sh 'npx -y @infisical/cli export --env="prod" --path="/hemovida" --token="$INFISICAL_TOKEN" > .env'
+                }
+                sh "sed -i -E \"s/^([^=]+)=['\\\"](.*)['\\\"]\$/\\\\1=\\\\2/\" .env"
                 }
         }
 
