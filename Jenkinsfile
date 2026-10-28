@@ -9,9 +9,9 @@ pipeline {
         }
 
         stage('Fetch Secrets') {
-            steps {
-                sh 'npx -y @infisical/cli export --env="dev" --path="/hemovida" --token="st.0ffee575-a9ce-42aa-98be-e1b771c34e1c.4f5c640a4524bd30c8a98522decb4019.4f3697b54407b5addb96d086f54d10a5" > .env'
-            }
+            steps withCredentials([string(credentialsId: 'infisical-token-prod', variable: 'INFISICAL_TOKEN')]) {
+                    sh 'npx -y @infisical/cli export --env="prod" --path="/receitix" --token="$st.0ffee575-a9ce-42aa-98be-e1b771c34e1c.4f5c640a4524bd30c8a98522decb4019.4f3697b54407b5addb96d086f54d10a5" > .env'
+                }
         }
 
         stage('Instalar Dependências') {
