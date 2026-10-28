@@ -147,11 +147,11 @@ pipeline {
             '''
         }
 
-        always {
-            sh '''
-                set +x
-                rm -f .env
-            '''
-        }
+        // always {
+        //     sh '''
+        //         set +x
+        //         rm -f .env
+        //     '''
+        // }
     }
 }
