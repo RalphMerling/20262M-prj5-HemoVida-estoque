@@ -1,21 +1,31 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
+    environment {
+        APP_NAME = 'hemovida-estoque'
+    }
+
     stages {
 
-        stage('Verificar Repositório') {
+        stage('Checkout GitHub') {
             steps {
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/RalphMerling/20262M-prj5-HemoVida-estoque'
+                        url: 'https://github.com/RalphMerling/20262M-prj5-HemoVida-estoque.git'
                     ]]
                 ])
             }
         }
 
-        stage('Fetch Secrets') {
+        stage('Fetch Secrets - Infisical') {
             steps {
                 withCredentials([
                     string(
@@ -25,98 +35,123 @@ pipeline {
                 ]) {
                     sh '''
                         set +x
+                        set -eu
+                        umask 077
+
+                        rm -f .env
+
                         npx -y @infisical/cli export \
                             --env="prod" \
                             --path="/hemovida" \
-                            --token="$INFISICAL_TOKEN" > .env
+                            --token="$INFISICAL_TOKEN" \
+                            > .env
+
+                        test -s .env || {
+                            echo "ERRO: Arquivo .env não foi gerado."
+                            exit 1
+                        }
+
+                        echo "Secrets carregados com sucesso."
                     '''
                 }
             }
         }
 
-        stage('Instalar Dependências') {
+        stage('Validar Docker Compose') {
             steps {
-                sh 'npm ci'
-            }
-        }
+                sh '''
+                    set -eu
 
-        stage('Prisma Generate') {
-            steps {
-                sh 'npx prisma generate'
+                    docker compose config --quiet
+
+                    echo "Docker Compose validado."
+                '''
             }
         }
 
         stage('Construir Imagem Docker') {
             steps {
-                sh 'docker compose build'
+                sh '''
+                    set -eu
+
+                    docker compose build
+
+                    echo "Imagem Docker construída."
+                '''
             }
         }
 
-        stage('Docker Up') {
+        stage('Deploy Docker') {
             steps {
-                sh 'docker compose up -d'
+                sh '''
+                    set -eu
+
+                    docker compose up -d --no-build \
+                        --force-recreate
+
+                    echo "Deploy executado."
+                '''
             }
         }
 
-        stage('Docker PS') {
+        stage('Verificar Container') {
             steps {
-                sh 'docker compose ps'
+                sh '''
+                    set -eu
+
+                    echo "Verificando container..."
+
+                    sleep 10
+
+                    RUNNING=$(docker inspect \
+                        --format '{{.State.Running}}' \
+                        "$APP_NAME")
+
+                    if [ "$RUNNING" != "true" ]; then
+                        echo "ERRO: Container não está rodando."
+
+                        docker compose logs --tail=50 \
+                            "$APP_NAME" || true
+
+                        exit 1
+                    fi
+
+                    echo "Container em execução."
+                    docker compose ps
+
+                    echo "Versão do Node.js no container:"
+                    docker exec "$APP_NAME" node -v
+                '''
             }
         }
     }
 
     post {
+
         success {
-            echo 'Pipeline HemoVida executado com sucesso!'
+            echo '''
+            ====================================
+             HEMOVIDA ESTOQUE
+             DEPLOY EXECUTADO COM SUCESSO
+             PORTA: 7503
+            ====================================
+            '''
         }
 
         failure {
-            echo 'Falha na execução do pipeline HemoVida.'
+            echo '''
+            ====================================
+             HEMOVIDA ESTOQUE
+             FALHA NA EXECUÇÃO DO PIPELINE
+            ====================================
+            '''
         }
 
         always {
-            sh 'rm -f .env'
+            sh '''
+                set +x
+                rm -f .env
+            '''
         }
     }
 }
-    
-
-        // stage('Fazer Deploy') {
-        //     steps {
-        //         script {
-        //             def appName = 'hemovida-estoque'
-        //             def imageTag = "${appName}:${env.BUILD_ID}"
-
-        //             sh "docker stop ${appName} || exit 0"
-        //             sh "docker rm -v ${appName} || exit 0"
-        //             sh "docker run -d --name ${appName} -p 7503:7503 --env-file .env ${imageTag}"
-        //         }
-        //     }
-        // }
-
-        stage('Docker Up') {
-
-            steps {
-
-                sh 'docker compose up -d'
-            }
-        }
-
-        stage('Docker PS') {
-
-            steps {
-
-                sh 'node -v'
-                sh 'npm -v'
-            }
-        }
-
-    post {
-        success {
-            echo 'Pipeline HemoVida executado com sucesso!'
-        }
-
-        failure {
-            echo 'Falha na execução do pipeline HemoVida.'
-        }
-    }

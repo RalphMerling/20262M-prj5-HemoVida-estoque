@@ -1,17 +1,27 @@
-FROM node:20-alpine AS build
+FROM node:24-bookworm-slim
+
 WORKDIR /app
+
+# Bibliotecas necessárias ao Prisma
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      openssl \
+      ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Instalar dependências
 COPY package*.json ./
 RUN npm ci
+
+# Copiar código-fonte
 COPY . .
 
-FROM node:20-alpine
-WORKDIR /app
+# Gerar Prisma Client
+RUN npx prisma generate
 
-RUN apk add --no-cache bash curl openssl libc6-compat && \
-    curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.alpine.sh' | bash && \
-    apk add infisical
-
-COPY --from=build /app /app
+ENV NODE_ENV=production
+ENV PORT=7503
 
 EXPOSE 7503
-CMD ["sh", "-c", "export INFISICAL_TOKEN=$(infisical login --domain https://app.infisical.com --method universal-auth --client-id $INFISICAL_UNIVERSAL_AUTH_CLIENT_ID --client-secret $INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET --silent --plain) && infisical run --domain https://app.infisical.com --projectId $INFISICAL_PROJECT_ID --env prod --path /hemovida/estoque -- node src/server.js"]
+
+CMD ["npm", "run", "dev"]
