@@ -11,8 +11,6 @@ services:
     ports:
       - "7503:7503"
 
-    restart: unless-stopped
-
     env_file:
       - .env
 
