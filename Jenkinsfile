@@ -19,7 +19,7 @@ pipeline {
             steps {
                 withCredentials([
                     string(
-                        credentialsId: 'infisical-token-prod',
+                        credentialsId: 'tokenralphhemovida',
                         variable: 'INFISICAL_TOKEN'
                     )
                 ]) {
