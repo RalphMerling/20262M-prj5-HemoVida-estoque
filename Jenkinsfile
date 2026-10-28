@@ -10,7 +10,7 @@ pipeline {
 
         stage('Fetch Secrets') {
             steps withCredentials([string(credentialsId: 'infisical-token-prod', variable: 'INFISICAL_TOKEN')]) {
-                    sh 'npx -y @infisical/cli export --env="prod" --path="/receitix" --token="$INFISICAL_TOKEN" > .env'
+                    sh 'npx -y @infisical/cli export --env="prod" --path="/hemovida" --token="$INFISICAL_TOKEN" > .env'
                 }
         }
 
