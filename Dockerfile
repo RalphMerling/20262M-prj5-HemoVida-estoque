@@ -26,7 +26,7 @@ RUN DATABASE_URL="placeholder" npx prisma generate && \
     find dist -name "main.js"
 
 # Configuração da aplicação
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 ENV PORT=7503
 
 # Porta da aplicação
