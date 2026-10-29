@@ -41,7 +41,7 @@ pipeline {
                         rm -f .env
 
                         npx -y @infisical/cli export \
-                            --env="prod" \
+                            --env="dev" \
                             --path="/hemovida" \
                             --token="$INFISICAL_TOKEN" \
                             > .env
