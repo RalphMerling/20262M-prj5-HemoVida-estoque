@@ -31,4 +31,4 @@ ENV PORT=7503
 EXPOSE 7503
 
 # Inicialização da aplicação
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start:prod"]
