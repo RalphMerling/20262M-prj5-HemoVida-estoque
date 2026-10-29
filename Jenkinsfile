@@ -33,26 +33,23 @@ pipeline {
                         variable: 'INFISICAL_TOKEN'
                     )
                 ]) {
-                    sh '''
-                        set +x
-                        set -eu
-                        umask 077
-
-                        rm -f .env
-
-                        npx -y @infisical/cli export \
-                            --env="dev" \
-                            --path="/hemovida" \
-                            --token="$INFISICAL_TOKEN" \
-                            > .env
-
-                        test -s .env || {
-                            echo "ERRO: Arquivo .env não foi gerado."
-                            exit 1
-                        }
-
-                        echo "Secrets carregados com sucesso."
-                    '''
+                        sh '''
+                            set +x
+                            set -eu
+                            umask 077
+                            rm -f .env
+                        
+                            npx -y @infisical/cli export \
+                                --env="dev" \
+                                --path="/hemovida" \
+                                --token="$INFISICAL_TOKEN" \
+                                > .env
+                        
+                            test -s .env || { echo "ERRO: .env vazio."; exit 1; }
+                        
+                            echo "Variáveis carregadas:"
+                            cut -d= -f1 .env
+                        '''
                 }
             }
         }
